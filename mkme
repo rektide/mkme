@@ -1,0 +1,41 @@
+#!/bin/sh
+# vim: filetype=sh
+
+# touch a directory into existence and own it
+mkoned(){
+	(
+		( [ -d "$1" ] || mkdir -p $1 || sudo mkdir -p $1 ) && 
+		( [ -w "$1" ] || chown $USER $1 || sudo chown $USER $1 )
+	)
+}
+
+# touch a file into existence and own it
+mkonef(){
+	base="$(dirname $(readlink -m $1))"
+	mkoned "$base"
+
+	(	
+		( [ -f "$1" ] || touch $1 || sudo touch $1 ) &&
+		( [ -w "$1" ] || chown $USER $1 || sudo chown $USER $1 )
+	)
+}
+
+# touch a file into existence (or directory if ends with /)
+mkone(){
+	lastChar="$(echo -n $1 | tail -c1)"
+	if [ "$lastChar" = "/" ]
+	then
+		mkoned "$1"
+	else
+		mkonef "$1"
+	fi
+}
+
+mkme(){
+	for f in "$@"
+	do
+		mkone "$f"
+	done
+}
+
+mkme "$@"
